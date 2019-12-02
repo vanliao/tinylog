@@ -33,7 +33,7 @@ struct tlog_time {
 };
 
 #ifndef TLOG_MAX_LINE_LEN
-#define TLOG_MAX_LINE_LEN (1024)
+#define TLOG_MAX_LINE_LEN (1024*32)
 #endif
 
 /* TLOG FLAGS LIST */
@@ -72,6 +72,7 @@ format: Log formats
 #define BASE_FILE_NAME __FILE__
 #endif
 #define tlog(level, format, ...) tlog_ext(level, BASE_FILE_NAME, __LINE__, __func__, NULL, format, ##__VA_ARGS__)
+#define tlog_printf(log, level, format, ...) tlog_vext_print(log, level, BASE_FILE_NAME, __LINE__, __func__, NULL, format, ##__VA_ARGS__)
 
 extern int tlog_ext(tlog_level level, const char *file, int line, const char *func, void *userptr, const char *format, ...)
     __attribute__((format(printf, 6, 7))) __attribute__((nonnull (6)));
@@ -146,8 +147,8 @@ Function: Print log to log stream
 log: log stream
 format: Log formats
 */
-extern int tlog_printf(tlog_log *log, const char *format, ...) __attribute__((format(printf, 2, 3))) __attribute__((nonnull (1, 2)));
-
+//extern int tlog_printf(tlog_log *log, const char *format, ...) __attribute__((format(printf, 2, 3))) __attribute__((nonnull (1, 2)));
+extern int tlog_vext_print(struct tlog_log *log, tlog_level level, const char *file, int line, const char *func, void *userptr, const char *format, ...);
 /*
 Function: Print log to log stream with ap
 log: log stream

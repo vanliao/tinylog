@@ -305,12 +305,12 @@ static int _tlog_format(char *buff, int maxlen, struct tlog_info *info, void *us
 
     if (tlog.root->multi_log) {
         /* format prefix */
-        len = snprintf(buff, maxlen, "[%.4d-%.2d-%.2d %.2d:%.2d:%.2d,%.3d][%5d][%4s][%17s:%-4d] ", 
+        len = snprintf(buff, maxlen, "[%.4d-%.2d-%.2d %.2d:%.2d:%.2d,%.3d][%5d][%4s][%s:%d] ", 
             tm->year, tm->mon, tm->mday, tm->hour, tm->min, tm->sec, tm->usec / 1000, getpid(), 
             tlog_get_level_string(info->level), info->file, info->line);
     } else {
         /* format prefix */
-        len = snprintf(buff, maxlen, "[%.4d-%.2d-%.2d %.2d:%.2d:%.2d,%.3d][%5s][%17s:%-4d] ", 
+        len = snprintf(buff, maxlen, "[%.4d-%.2d-%.2d %.2d:%.2d:%.2d,%.3d][%5s][%s:%d] ", 
             tm->year, tm->mon, tm->mday, tm->hour, tm->min, tm->sec, tm->usec / 1000, 
             tlog_get_level_string(info->level), info->file, info->line);
     }
@@ -339,18 +339,18 @@ static int _tlog_root_log_buffer(char *buff, int maxlen, void *userptr, const ch
     int len = 0;
     int log_len = 0;
     struct tlog_info_inter *info_inter = (struct tlog_info_inter *)userptr;
-    struct tlog_segment_log_head *log_head = NULL;
+    //struct tlog_segment_log_head *log_head = NULL;
 	int max_format_len = 0;
 
 	if (tlog_format == NULL) {
         return -1;
     }
 
-    if (tlog.root->segment_log) {
+    /*if (tlog.root->segment_log) {
         log_head = (struct tlog_segment_log_head *) buff;
         len += sizeof(*log_head);
         memcpy(&log_head->info, &info_inter->info, sizeof(log_head->info));
-    }
+    }*/
 
 	max_format_len = maxlen - len - 2;
 	log_len = tlog_format(buff + len, max_format_len, &info_inter->info, info_inter->userptr, format, ap);
@@ -365,19 +365,19 @@ static int _tlog_root_log_buffer(char *buff, int maxlen, void *userptr, const ch
 	len += log_len;
 
     /* add new line character*/
-    if (*(buff + len - 1) != '\n' && len + 1 < maxlen - len) {
+/*    if (*(buff + len - 1) != '\n' && len + 1 < maxlen) {
         *(buff + len) = '\n';
         len++;
         log_len++;
     }
 
-    if (tlog.root->segment_log && len + 1 < maxlen - len) {
+    if (*(buff + len - 1) != '\0' && tlog.root->segment_log && len + 1 < maxlen) {
         *(buff + len) = '\0';
         len++;
         log_len++;
         log_head->len = log_len;
     }
-
+*/
     return len;
 }
 
@@ -531,17 +531,17 @@ int tlog_vprintf(struct tlog_log *log, const char *format, va_list ap)
     return _tlog_vprintf(log, _tlog_print_buffer, NULL, format, ap);
 }
 
-int tlog_printf(struct tlog_log *log, const char *format, ...)
-{
-    int len;
-    va_list ap;
+//int tlog_printf(struct tlog_log *log, const char *format, ...)
+//{
+//    int len;
+//    va_list ap;
 
-    va_start(ap, format);
-    len = tlog_vprintf(log, format, ap);
-    va_end(ap);
+//    va_start(ap, format);
+//    len = tlog_vprintf(log, format, ap);
+//    va_end(ap);
 
-    return len;
-}
+//    return len;
+//}
 
 static int _tlog_early_print(const char *format, va_list ap) 
 {
@@ -599,6 +599,38 @@ int tlog_vext(tlog_level level, const char *file, int line, const char *func, vo
     }
 
     return _tlog_vprintf(tlog.root, _tlog_root_log_buffer, &info_inter, format, ap);
+}
+
+int tlog_vext_print(struct tlog_log *log, tlog_level level, const char *file, int line, const char *func,
+                    void *userptr, const char *format, ...)
+{
+    struct tlog_info_inter info_inter;
+
+    if (level < tlog_set_level) {
+        return 0;
+    }
+
+    if (unlikely(tlog.root->logsize <= 0)) {
+        return 0;
+    }
+
+    if (level >= TLOG_END) {
+        return -1;
+    }
+
+    info_inter.info.file = file;
+    info_inter.info.line = line;
+    info_inter.info.func = func;
+    info_inter.info.level = level;
+    info_inter.userptr = userptr;
+    if (_tlog_gettime(&info_inter.info.time) != 0) {
+        return -1;
+    }
+    va_list ap;
+    va_start(ap, format);
+    int ret = _tlog_vprintf(log, _tlog_root_log_buffer, &info_inter, format, ap);
+    va_end(ap);
+    return ret;
 }
 
 int tlog_ext(tlog_level level, const char *file, int line, const char *func, void *userptr, const char *format, ...)
@@ -1285,12 +1317,12 @@ static void _tlog_work_write(struct tlog_log *log, int log_len, int log_extlen, 
         _tlog_write_buff_log(log, log_len, log_extlen);
     }
 
-    if (log_dropped > 0) {
+    //if (log_dropped > 0) {
         /* if there is dropped log, record dropped log number */
-        char dropmsg[TLOG_TMP_LEN];
-        snprintf(dropmsg, sizeof(dropmsg), "[Totoal Dropped %d Messages]\n", log_dropped);
-        log->output_func(log, dropmsg, strnlen(dropmsg, sizeof(dropmsg)));
-    }
+    //    char dropmsg[TLOG_TMP_LEN];
+    //    snprintf(dropmsg, sizeof(dropmsg), "[Totoal Dropped %d Messages]\n", log_dropped);
+    //    log->output_func(log, dropmsg, strnlen(dropmsg, sizeof(dropmsg)));
+   // }
 }
 
 static int _tlog_root_write_log(struct tlog_log *log, char *buff, int bufflen)
