@@ -24,13 +24,13 @@ typedef enum {
 
 struct tlog_time {
     int year;
-    int mon;
-    int mday;
-    int hour;
-    int min;
-    int sec;
-    int usec;
-};
+    unsigned int usec;
+    unsigned char mon;
+    unsigned char mday;
+    unsigned char hour;
+    unsigned char min;
+    unsigned char sec;
+} __attribute__((packed));
 
 #ifndef TLOG_MAX_LINE_LEN
 #define TLOG_MAX_LINE_LEN (1024*32)
@@ -72,7 +72,6 @@ format: Log formats
 #define BASE_FILE_NAME __FILE__
 #endif
 #define tlog(level, format, ...) tlog_ext(level, BASE_FILE_NAME, __LINE__, __func__, NULL, format, ##__VA_ARGS__)
-#define tlog_printf(log, level, format, ...) tlog_vext_print(log, level, BASE_FILE_NAME, __LINE__, __func__, NULL, format, ##__VA_ARGS__)
 
 extern int tlog_ext(tlog_level level, const char *file, int line, const char *func, void *userptr, const char *format, ...)
     __attribute__((format(printf, 6, 7))) __attribute__((nonnull (6)));
