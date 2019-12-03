@@ -1334,10 +1334,10 @@ static int _tlog_root_write_log(struct tlog_log *log, char *buff, int bufflen)
     struct tlog_segment_log_head *head = NULL;
     static struct tlog_segment_log_head empty_info;
     if (tlog.output_func == NULL) {
-        if (log->segment_log) {
-            head = (struct tlog_segment_log_head *)buff;
-            return _tlog_write(log, head->data, head->len);
-        }
+        //if (log->segment_log) {
+        //    head = (struct tlog_segment_log_head *)buff;
+        //    return _tlog_write(log, head->data, head->len);
+        //}
         return _tlog_write(log, buff, bufflen);
     }
 
